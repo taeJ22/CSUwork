@@ -1,0 +1,36 @@
+#count of cookies eaten today
+cookies = 7
+print(cookies)
+
+#carb calculator 
+def carb_content(x):
+    cookies_count = x
+    carb_count = 200 
+    return x * carb_count
+    
+#cookies types
+cookies_type = ["Chocolate", "Snickerdoodle", "Oatmeal", print(10 > 9)
+print(10 == 9)
+print(10 < 9)
+]
+for y in cookies_type:
+  print(y) 
+  if y == "Snickerdoodle":
+    break
+    
+#cookies message
+def cookies_message(cookies):
+    if cookies >= 8:
+        print("You ate " + cookies +  ", you should save the rest for later.")
+    elif cookies == 8:
+        print("You have had all you cookies for today." + cookies + " is your daily limit set based on your goals.")
+    else:
+        print("You can have some more cookies!")
+cookies_message(1)
+#cookie goal 
+def cookies_goal(x):
+    cookies = x
+    print(x > 8)
+    print(x == 8)
+    print(x < 8)
+cookies_goal(3)
