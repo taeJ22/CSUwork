@@ -1,0 +1,334 @@
+/*  Generated Code (IMPORT) */
+/* Source File: flightsnew.xlsx */
+/* Source Path: /home/u49417529 */
+/* Code generated on: 9/6/20, 8:31 AM */
+
+%web_drop_table(WORK.IMPORT);
+
+
+FILENAME REFFILE '/home/u49417529/flightsnew.xlsx';
+
+PROC IMPORT DATAFILE=REFFILE
+	DBMS=XLSX
+	OUT=WORK.IMPORT;
+	GETNAMES=YES;
+RUN;
+
+PROC CONTENTS DATA=WORK.IMPORT; RUN;
+
+
+%web_open_table(WORK.IMPORT);
+
+
+data work.filter9to12;
+    set work.filter2019;
+    if _N_ in (9, 10, 11, 12) then output;
+    run;
+    
+data work.filter1to4;
+    set work.filter2020;
+    if _N_ in (1,2, 3, 4) then output;
+    run;
+    
+proc print data=work.filter9to12(obs=4);
+	title "Months 9 to 12 2019";
+run;
+
+proc print data=work.filter1to4(obs=4);
+	title "Months 1 to 4 in 2020";
+run;
+ /* create new table for plot combine 1to4 2020 and 9to12 2019 */ 
+
+proc sql noprint;
+	create table work.combine as select a.* from WORK.FILTER1TO4 as a outer union 
+		corr select b.* from WORK.FILTER9TO12 as b;
+quit;
+
+/* data analysis using bar graphs*/ 
+
+
+proc sort data=WORK.COMBINE out=_BarLineChartTaskData;
+	by Year;
+run;
+
+/* Compute axis ranges */
+proc means data=_BarLineChartTaskData noprint;
+	by Year;
+	class Month / order=data;
+	var DOMESTIC INTERNATIONAL;
+	output out=_BarLine_(where=(_type_ > 0)) sum(DOMESTIC INTERNATIONAL)=resp1 
+		resp2;
+run;
+
+/* Compute response min and max values (include 0 in computations) */
+data _null_;
+	retain respmin 0 respmax 0;
+	retain respmin1 0 respmax1 0 respmin2 0 respmax2 0;
+	set _BarLine_ end=last;
+	respmin1=min(respmin1, resp1);
+	respmin2=min(respmin2, resp2);
+	respmax1=max(respmax1, resp1);
+	respmax2=max(respmax2, resp2);
+
+	if last then
+		do;
+			call symputx ("respmin1", respmin1);
+			call symputx ("respmax1", respmax1);
+			call symputx ("respmin2", respmin2);
+			call symputx ("respmax2", respmax2);
+			call symputx ("respmin", min(respmin1, respmin2));
+			call symputx ("respmax", max(respmax1, respmax2));
+		end;
+run;
+
+/* Define a macro for offset */
+%macro offset ();
+	%if %sysevalf(&respmin eq 0) %then
+		%do;
+			offsetmin=0 %end;
+
+	%if %sysevalf(&respmax eq 0) %then
+		%do;
+			offsetmax=0 %end;
+%mend offset;
+
+ods graphics / reset width=6.4in height=4.8in imagemap;
+
+proc sgplot data=_BarLineChartTaskData nocycleattrs;
+	by Year;
+	title height=14pt "4 Months COVID-19 Comparision";
+	vbar Month / response=DOMESTIC fillattrs=(color=CXe688d3) stat=sum;
+	vline Month / response=INTERNATIONAL lineattrs=(thickness=3 color=CX003399) 
+		stat=sum y2axis;
+	yaxis grid min=&respmin1 max=&respmax1 %offset();
+	y2axis min=&respmin2 max=&respmax2 %offset();
+	keylegend / location=outside;
+run;
+
+ods graphics / reset;
+title;
+
+proc datasets library=WORK noprint;
+	delete _BarLine_ _BarLineChartTaskData;
+	run;
+	
+	
+/* End */
+
+/* list monthly data for 4 months prior and after */ 
+title1 'List Data for WORK.COMBINE';
+
+proc sort data=WORK.COMBINE out=WORK.SORTTEMP;
+	by Year;
+run;
+
+proc print data=WORK.SORTTEMP label;
+	var DOMESTIC INTERNATIONAL;
+	by Year;
+	sum DOMESTIC INTERNATIONAL;
+run;
+
+proc delete data=work.SORTTEMP;
+run;
+
+title1;
+/* end */
+
+/* Use: Code used to produce statistical data for US Flight Trends analysis.  
+Dataset from the BTS - United States Department of Transportation */ 
+
+/* Generated Code (IMPORT) */
+/* Source File: flightsnew.xlsx */
+/* Source Path: /home/u49417529 */
+/* Code generated on: 9/6/20, 8:31 AM */
+
+%web_drop_table(WORK.IMPORT);
+
+/* import */ 
+FILENAME REFFILE '/home/u49417529/flightsnew.xlsx';
+
+PROC IMPORT DATAFILE=REFFILE
+	DBMS=XLSX
+	OUT=WORK.IMPORT;
+	GETNAMES=YES;
+RUN;
+
+PROC CONTENTS DATA=WORK.IMPORT; RUN;
+
+/* end */ 
+
+%web_open_table(WORK.IMPORT);
+
+/* Correleation between domestic and internatinal table and graph */
+
+proc corr data=WORK.IMPORT pearson nosimple noprob plots=Scatter;
+	var INTERNATIONAL DOMESTIC;
+run;
+
+/* START customized Dom vs Intern flights by year (sums) */
+/* Compute axis ranges */
+proc means data=WORK.IMPORT noprint;
+	class Year / order=data;
+	var DOMESTIC INTERNATIONAL;
+	output out=_BarLine_(where=(_type_ > 0)) sum(DOMESTIC INTERNATIONAL)=resp1 
+		resp2;
+run;
+
+/* Compute response min and max values (include 0 in computations) */
+data _null_;
+	retain respmin 0 respmax 0;
+	retain respmin1 0 respmax1 0 respmin2 0 respmax2 0;
+	set _BarLine_ end=last;
+	respmin1=min(respmin1, resp1);
+	respmin2=min(respmin2, resp2);
+	respmax1=max(respmax1, resp1);
+	respmax2=max(respmax2, resp2);
+
+	if last then
+		do;
+			call symputx ("respmin1", respmin1);
+			call symputx ("respmax1", respmax1);
+			call symputx ("respmin2", respmin2);
+			call symputx ("respmax2", respmax2);
+			call symputx ("respmin", min(respmin1, respmin2));
+			call symputx ("respmax", max(respmax1, respmax2));
+		end;
+run;
+
+/* Define a macro for offset */
+%macro offset ();
+	%if %sysevalf(&respmin eq 0) %then
+		%do;
+			offsetmin=0 %end;
+
+	%if %sysevalf(&respmax eq 0) %then
+		%do;
+			offsetmax=0 %end;
+%mend offset;
+
+ods graphics / reset width=6.4in height=4.8in imagemap;
+
+proc sgplot data=WORK.IMPORT nocycleattrs;
+	title height=12pt "Total Domestic and International Flights (2002-2020)";
+	vbar Year / response=DOMESTIC fillattrs=(color=CX589c53 transparency=0.25) 
+		stat=sum;
+	vline Year / response=INTERNATIONAL lineattrs=(thickness=4 color=CXad1f93) 
+		stat=sum y2axis;
+	yaxis grid min=&respmin1 max=&respmax1 %offset();
+	y2axis min=&respmin2 max=&respmax2 %offset();
+	keylegend / location=outside;
+run;
+
+ods graphics / reset;
+title;
+
+/*end* start > dom vs internal by month (mean)/
+/* Compute axis ranges */
+proc means data=WORK.IMPORT noprint;
+	class Month / order=data;
+	var DOMESTIC INTERNATIONAL;
+	output out=_BarLine_(where=(_type_ > 0)) mean(DOMESTIC INTERNATIONAL)=resp1 
+		resp2;
+run;
+
+/* Compute response min and max values (include 0 in computations) */
+data _null_;
+	retain respmin 0 respmax 0;
+	retain respmin1 0 respmax1 0 respmin2 0 respmax2 0;
+	set _BarLine_ end=last;
+	respmin1=min(respmin1, resp1);
+	respmin2=min(respmin2, resp2);
+	respmax1=max(respmax1, resp1);
+	respmax2=max(respmax2, resp2);
+
+	if last then
+		do;
+			call symputx ("respmin1", respmin1);
+			call symputx ("respmax1", respmax1);
+			call symputx ("respmin2", respmin2);
+			call symputx ("respmax2", respmax2);
+			call symputx ("respmin", min(respmin1, respmin2));
+			call symputx ("respmax", max(respmax1, respmax2));
+		end;
+run;
+
+/* Define a macro for offset */
+%macro offset ();
+	%if %sysevalf(&respmin eq 0) %then
+		%do;
+			offsetmin=0 %end;
+
+	%if %sysevalf(&respmax eq 0) %then
+		%do;
+			offsetmax=0 %end;
+%mend offset;
+
+ods graphics / reset width=6.4in height=4.8in imagemap;
+
+proc sgplot data=WORK.IMPORT nocycleattrs;
+	title height=14pt "Domestic versus International Average by Month";
+	vbar Month / response=DOMESTIC fillattrs=(color=CX6b9de9 transparency=0.25) 
+		stat=mean;
+	vline Month / response=INTERNATIONAL lineattrs=(thickness=4 color=CX003399) 
+		stat=mean y2axis;
+	yaxis grid min=&respmin1 max=&respmax1 %offset();
+	y2axis min=&respmin2 max=&respmax2 %offset();
+	keylegend / location=outside;
+run;
+
+ods graphics / reset;
+title;
+
+proc datasets library=WORK noprint;
+	delete _BarLine_;
+	run;
+/* end. Start > Regression line fit for Domestic */
+ods graphics / reset width=6.4in height=4.8in imagemap;
+
+proc sgplot data=WORK.IMPORT;
+	title height=14pt "Domestic Regression Line";
+	footnote2 justify=left height=9pt "Polynomial = 2";
+	reg x=Year y=DOMESTIC / nomarkers degree=2 cli alpha=0.05;
+	scatter x=Year y=DOMESTIC / markerattrs=(symbol=square color=CXcf7d3e);
+run;
+
+ods graphics / reset;
+title;
+footnote2;
+
+/* End. Start > regression line fit for International */ 
+ods graphics / reset width=6.4in height=4.8in imagemap;
+
+proc sgplot data=WORK.IMPORT;
+	title height=14pt "International Regression Line";
+	footnote2 justify=left height=9pt "Polynomial = 2";
+	reg x=Year y=INTERNATIONAL / nomarkers degree=2 cli alpha=0.05;
+	scatter x=Year y=INTERNATIONAL / markerattrs=(symbol=square color=CXcf7d3e);
+run;
+
+ods graphics / reset;
+title;
+footnote2;
+/* End */ 
+/* List total Dom and Int by month (sum) - table */ title1 'List Data for WORK.IMPORT';
+
+proc sort data=WORK.IMPORT out=WORK.SORTTEMP;
+	by Month;
+run;
+
+proc print data=WORK.SORTTEMP noobs label;
+	var DOMESTIC INTERNATIONAL;
+	by Month;
+	sum DOMESTIC INTERNATIONAL;
+run;
+
+proc delete data=work.SORTTEMP;
+run;
+
+title1;
+/* End list data */ 
+/* Custom sum statistics */ 
+proc means data=WORK.IMPORT chartype mean min max n nmiss sum vardef=df;
+	var INTERNATIONAL DOMESTIC TOTAL;
+run;
+/* ALL END */ 
