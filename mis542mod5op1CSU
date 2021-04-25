@@ -1,4 +1,4 @@
-#code used for Python Data Analysis with Jupyter Notebook/pandas for MIS 542 04/24/2021 mod 6 op 1 for CSU global 
+#code used for Python Data Analysis with Jupyter Notebook/pandas for MIS 542 04/24/2021 mod 5 op 1 for CSU global 
 
 #import sample of titanic data
 df = pd.read_csv("MIS542titanic (1).csv")
