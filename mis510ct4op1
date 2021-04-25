@@ -1,0 +1,58 @@
+#CODE FOR R STUDIO
+
+#freq table for Financial Condition (binary)
+head(subset(Banks, select = "Financial.Condition"))
+factor(Banks$Financial.Condition)
+table(Banks$Financial.Condition)
+
+#basic plots for data
+plot(Banks$TotCap.Assets)
+plot(Banks$TotExp.Assets)
+plot(Banks$TotLns.Lses.Assets)
+
+#summary statistics of dataset
+summary(Banks)
+
+#Correlation for cap and exp assets
+cor(Banks$TotCap.Assets, Banks$TotExp.Assets
+ main="Relationship Between Capitol Assets and Expenses",
+ xlab="Assets",
+ ylab=" Expenses")
+ 
+#multiple regression model for TotExp.Assets, TotCap.Assets, and TotLns.Lses.Assets
+fit1 <- lm(TotLns.Lses.Assets~TotExp.Assets+TotCap.Assets,data=Banks)
+summary(fit1)
+equation1=function(x){coef(fit1)[2]*x+coef(fit1)[1]}
+equation2=function(x){coef(fit1)[2]*x+coef(fit1)[1]+coef(fit1)[3]}
+ggplot(Banks,aes(y=TotCap.Assets,x=TotExp.Assets,color=TotLns.Lses.Assets))+geom_point()+stat_function(fun=equation1,geom="line",co
+or=scales::hue_pal()(2)[1])+ stat_function(fun=equation2,geom="line",color=scales::hue_pal()(2)[2])
+
+#graphs for understanding TotCap.Assets and TotExp.Assets
+fitnew <- lm(TotExp.Assets~TotCap.Assets,data=Banks)
+require(ggiraph)
+require(ggiraphExtra)
+require(plyr)
+ggPredict(fitnew,se=TRUE,interactive=TRUE)
+
+#logistic regression model for financial condition 
+logit.reg <- glm(formula = as.factor(Financial.Condition) ~ TotExp.Assets + TotCap.Assets + TotLns.Lses.Assets, family = "binomial", data = Banks)
+summary(logit.reg)
+
+#Logisitc using only exp and cap 
+glm(formula = as.factor(Financial.Condition) ~ TotExp.Assets + TotCap.Assets, family = "binomial", data = Banks)
+
+#Logisitc using only exp and cap 
+glm(formula = as.factor(Financial.Condition) ~ TotExp.Assets +                TotCap.Assets, family = "binomial", data = Banks)
+
+#create test/train data from “Banks”
+library(caret)
+intrain<-createDataPartition(y=Banks$Financial.Condition,p=0.7,list=FALSE)
+training<-Banks[intrain,]
+testing<-Banks[-intrain,]
+
+#Confusion matric function applied 
+confusionMatrix(
+factor(training, levels = 1:6),
+factor(Banks$Financial.Condition, levels = 1:6)
+)
+
